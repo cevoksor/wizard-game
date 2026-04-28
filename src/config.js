@@ -3,7 +3,7 @@ export const ZOOM = 2.0;
 export const BASE_SPEED = 220;
 export const SPRINT_MULTIPLIER = 2;
 export const PLAYER_SIZE = 18;
-export const PLAYER_BASE_SCALE = 1.6;
+export const PLAYER_BASE_SCALE = 1.35;
 export const PLAYER_HITBOX = 24;
 
 export const RESPAWN_DELAY = 0.5;
@@ -17,13 +17,13 @@ export const PLAYER_PROJECTILE_SPEED = 500;
 export const ENEMY_DRAW_SCALE = 1.6;
 export const ENEMY_MAX_HP = 2;
 export const ENEMY_HITBOX = 36;
-export const ENEMY_FIRE_INTERVAL_MIN = 0.5;
-export const ENEMY_FIRE_INTERVAL_MAX = 1.4;
+export const ENEMY_FIRE_INTERVAL_MIN = 0.35;
+export const ENEMY_FIRE_INTERVAL_MAX = 0.9;
 export const ENEMY_AGGRO_RANGE = 800;
 export const ENEMY_LOS_STEP = 8;
 export const ENEMY_PROJECTILE_SPEED = 400;
-export const ENEMY_BURST_COUNT = 3;
-export const ENEMY_BURST_SPREAD = 0.28;
+export const ENEMY_BURST_COUNT = 1;
+export const ENEMY_BURST_SPREAD = 0;
 
 export const MERCHANT_DRAW_SCALE = 1.6;
 export const MERCHANT_INTERACT_RANGE = 120;
@@ -37,8 +37,8 @@ export const STAMINA_DRAIN = 50;
 export const STAMINA_REGEN = 25;
 export const STAMINA_MIN_TO_START = 10;
 
-export const SHIELD_RADIUS = 90;
-export const SHIELD_DRAW_SCALE = 0.85;
+export const SHIELD_RADIUS = 130;
+export const SHIELD_DRAW_SCALE = 1.0;
 export const BLOB_KNOCKBACK_DISTANCE = 70;
 export const SHIELD_BLOB_PUSH_BUFFER = 8;
 
