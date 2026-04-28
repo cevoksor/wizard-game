@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wizard Dungeon - Vortex Teleport</title>
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; background: #000; font-family: sans-serif; }
+    canvas { display: block; width: 100vw; height: 100vh; image-rendering: pixelated; }
+    #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; background: #1a1a1a; z-index: 10; }
+  </style>
+</head>
+<body>
+  <div id="loading">Připravuji magický vír...</div>
+  <canvas id="game"></canvas>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const loadingEl = document.getElementById("loading");
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    const ZOOM = 3.5; 
+    const BASE_SPEED = 220; 
+    const PROJECTILE_SPEED = 350; 
+    const PLAYER_SIZE = 18; 
+    const RESET_TIME = 0.5; 
+    const ANIM_SPEED = 6; // Rychlost zmenšování/zvětšování
+
+    const assets = {};
+    const keys = {};
+
+    window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+    window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+    async function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error(src));
+      });
+    }
+
+    function dist(ax, ay, bx, by) { return Math.hypot(bx - ax, by - ay); }
+
+    let mapData = null;
+    let world = { width: 0, height: 0, respawnPoint: {x: 100, y: 100}, merchant: null };
+    let player;
+    let enemies = []; 
+    let projectiles = [];
+
+    function getPixel(x, y) {
+      x = Math.floor(x); y = Math.floor(y);
+      if (x < 0 || y < 0 || x >= world.width || y >= world.height) return [255,255,255];
+      const i = (y * world.width + x) * 4;
+      return [mapData.data[i], mapData.data[i+1], mapData.data[i+2]];
+    }
+
+    function isGreen(x, y) {
+        const p = getPixel(x, y);
+        return (p[1] > 140 && p[1] > p[0] && p[1] > p[2]);
+    }
+
+    function isWall(x, y) {
+      const points = [{x: x - PLAYER_SIZE, y: y}, {x: x + PLAYER_SIZE, y: y}, {x: x, y: y - PLAYER_SIZE}, {x: x, y: y + PLAYER_SIZE}];
+      return points.some(p => {
+        const rgb = getPixel(p.x, p.y);
+        return (rgb[0] < 120 && rgb[1] < 120 && rgb[2] < 140 && (rgb[0] !== 0 || rgb[1] !== 0));
+      });
+    }
+
+    class Player {
+      constructor(x, y) {
+        this.x = x; this.y = y;
+        this.walkTime = 0;
+        this.moving = false;
+        this.isHit = false; 
+        this.hitTimer = 0; 
+        this.isSprinting = false;
+        this.scale = 1.0; 
+        this.animState = "idle"; // "idle", "shrinking", "growing"
+      }
+
+      update(dt) {
+        // --- LOGIKA ANIMACE TELEPORTU ---
+        if (this.animState === "shrinking") {
+            this.scale -= dt * ANIM_SPEED;
+            if (this.scale <= 0) {
+                this.scale = 0;
+                this.x = world.respawnPoint.x;
+                this.y = world.respawnPoint.y;
+                this.animState = "growing";
+                projectiles = []; 
+            }
+            return; 
+        }
+        if (this.animState === "growing") {
+            this.scale += dt * ANIM_SPEED;
+            if (this.scale >= 1.0) {
+                this.scale = 1.0;
+                this.animState = "idle";
+            }
+            return;
+        }
+
+        if (this.isHit) {
+          this.hitTimer += dt;
+          if (this.hitTimer >= RESET_TIME) {
+            this.x = world.respawnPoint.x; 
+            this.y = world.respawnPoint.y;
+            this.isHit = false; 
+            this.hitTimer = 0;
+            this.scale = 1.0;
+            this.animState = "idle";
+            projectiles = []; 
+          }
+          return; 
+        }
+
+        // POHYB A SPRINT
+        this.isSprinting = keys["shift"];
+        const currentSpeed = this.isSprinting ? BASE_SPEED * 2 : BASE_SPEED;
+
+        let dx = 0, dy = 0;
+        if (keys["w"] || keys["arrowup"]) dy--;
+        if (keys["s"] || keys["arrowdown"]) dy++;
+        if (keys["a"] || keys["arrowleft"]) dx--;
+        if (keys["d"] || keys["arrowright"]) dx++;
+        
+        if (dx !== 0 || dy !== 0) {
+          const len = Math.hypot(dx, dy); dx /= len; dy /= len;
+          this.moving = true; 
+          this.walkTime += this.isSprinting ? dt * 2 : dt;
+        } else { this.moving = false; }
+
+        const nextX = this.x + dx * currentSpeed * dt;
+        const nextY = this.y + dy * currentSpeed * dt;
+
+        // AKTIVACE VCUCNUTÍ
+        if (isGreen(this.x, this.y) && this.animState === "idle") {
+            this.animState = "shrinking";
+            return;
+        }
+
+        if (!isWall(nextX, this.y)) this.x = nextX;
+        if (!isWall(this.x, nextY)) this.y = nextY;
+      }
+
+      draw() {
+        const sx = canvas.width/2; 
+        const sy = canvas.height/2;
+        const playerBaseScale = 3.0; 
+        // Finální scale kombinuje základní měřítko a animační efekt
+        const currentScale = playerBaseScale * this.scale;
+
+        let imgToDraw = this.isHit ? assets.zasah : (this.moving && Math.floor(this.walkTime * 5) % 2 === 0 ? assets.krok_b : assets.krok_a);
+        
+        const mW = imgToDraw.width * currentScale;
+        const mH = imgToDraw.height * currentScale;
+        
+        // Kreslení s ohledem na aktuální scale (středem)
+        ctx.drawImage(imgToDraw, sx - mW/2, sy - mH/2, mW, mH);
+      }
+    }
+
+    class Enemy {
+      constructor(x, y) { this.x = x; this.y = y; this.timer = Math.random() * 3; }
+      update(dt, player, projectiles) {
+        if (!player.isHit && player.animState === "idle") {
+          this.timer += dt;
+          if (this.timer >= 3.0) { this.timer = 0; projectiles.push(new Projectile(this.x, this.y, player.x, player.y)); }
+        }
+      }
+      draw(camX, camY) {
+        const sx = canvas.width/2 + (this.x - camX) * ZOOM;
+        const sy = canvas.height/2 + (this.y - camY) * ZOOM;
+        const scale = 3.0; 
+        ctx.save();
+        ctx.translate(sx, sy);
+        const hW = assets.hul.width * scale;
+        const hH = assets.hul.height * scale;
+        ctx.save();
+        ctx.translate(-55 * scale, 5 * scale); 
+        ctx.rotate(Math.sin(Date.now()*0.005) * 0.2);
+        ctx.drawImage(assets.hul, -hW/2, -hH/1.2, hW, hH);
+        ctx.restore();
+        const eW = assets.carodej.width * scale;
+        const eH = assets.carodej.height * scale;
+        ctx.drawImage(assets.carodej, -eW/2, -eH/1.2, eW, eH);
+        ctx.restore();
+      }
+    }
+
+    class Projectile {
+      constructor(x, y, tx, ty) {
+        this.x = x; this.y = y;
+        const angle = Math.atan2(ty - y, tx - x);
+        this.vx = Math.cos(angle) * PROJECTILE_SPEED; this.vy = Math.sin(angle) * PROJECTILE_SPEED;
+        this.angle = angle + Math.PI/2; this.alive = true;
+      }
+      update(dt, player) {
+        this.x += this.vx * dt; this.y += this.vy * dt;
+        if (isWall(this.x, this.y)) this.alive = false;
+        // Pokud se hráč zrovna teleportuje, střely ho nezasáhnou
+        if (this.alive && !player.isHit && player.animState === "idle" && dist(this.x, this.y, player.x, player.y) < 100) { 
+          player.isHit = true; this.alive = false; 
+        }
+      }
+      draw(camX, camY) {
+        const sx = canvas.width/2 + (this.x - camX) * ZOOM;
+        const sy = canvas.height/2 + (this.y - camY) * ZOOM;
+        ctx.save(); ctx.translate(sx, sy); ctx.rotate(this.angle);
+        const projW = 150; const projH = 330;
+        ctx.drawImage(assets.strela, -projW/2, -projH/2, projW, projH); 
+        ctx.restore();
+      }
+    }
+
+    async function init() {
+      try {
+        const names = {
+          mapa: "mapa.png",
+          mapa_vizual: "mapa_vizual.png", 
+          krok_a: "krok_a.png",
+          krok_b: "krok_b.png",
+          zasah: "zasah.png",
+          carodej: "carodej.png",
+          hul: "hul.png",
+          strela: "strela.png",
+          kupec: "kupec.png",
+          bublina: "bublina.png"
+        };
+        for(let key in names) assets[key] = await loadImage(names[key]);
+
+        world.width = assets.mapa.width;
+        world.height = assets.mapa.height;
+        const offCanvas = document.createElement("canvas");
+        offCanvas.width = world.width; offCanvas.height = world.height;
+        const offCtx = offCanvas.getContext("2d");
+        offCtx.drawImage(assets.mapa, 0, 0);
+        mapData = offCtx.getImageData(0, 0, world.width, world.height);
+
+        const enemySpots = [];
+        for(let y=0; y<world.height; y++) {
+          for(let x=0; x<world.width; x++) {
+            const p = getPixel(x, y);
+            if (p[0] > 180 && p[1] > 180 && p[2] < 100) world.respawnPoint = {x, y};
+            if (p[0] > 200 && p[1] < 50 && p[2] < 50) {
+              if (!enemySpots.some(s => dist(s.x, s.y, x, y) < 100)) { enemies.push(new Enemy(x, y)); enemySpots.push({x, y}); }
+            }
+            if (p[0] > 200 && p[1] < 100 && p[2] > 200) { if (!world.merchant) world.merchant = {x, y}; }
+          }
+        }
+
+        player = new Player(world.respawnPoint.x, world.respawnPoint.y);
+        loadingEl.style.display = "none";
+        requestAnimationFrame(loop);
+      } catch(e) {
+        loadingEl.innerHTML = "CHYBA: " + e.message;
+      }
+    }
+
+    function loop(t) {
+      const dt = Math.min((t - (this.last || t)) / 1000, 0.1); this.last = t;
+      player.update(dt);
+      enemies.forEach(e => e.update(dt, player, projectiles));
+      projectiles = projectiles.filter(p => p.alive);
+      projectiles.forEach(p => p.update(dt, player));
+      ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      const mx = canvas.width/2 - player.x * ZOOM;
+      const my = canvas.height/2 - player.y * ZOOM;
+      ctx.drawImage(assets.mapa_vizual, mx, my, world.width * ZOOM, world.height * ZOOM);
+      
+      if (world.merchant) {
+        const msx = canvas.width/2 + (world.merchant.x - player.x) * ZOOM;
+        const msy = canvas.height/2 + (world.merchant.y - player.y) * ZOOM;
+        const mScale = 3.0;
+        const mW = assets.kupec.width * mScale;
+        const mH = assets.kupec.height * mScale;
+        ctx.drawImage(assets.kupec, msx - mW/2, msy - mH/1.1, mW, mH);
+        
+        if (dist(player.x, player.y, world.merchant.x, world.merchant.y) < 300) {
+            const bScale = 3.0;
+            const bW = assets.bublina.width * bScale;
+            const bH = assets.bublina.height * bScale;
+            ctx.drawImage(assets.bublina, msx - bW/2, msy - mH - bH + 20, bW, bH); 
+        }
+      }
+      
+      enemies.forEach(e => e.draw(player.x, player.y));
+      projectiles.forEach(p => p.draw(player.x, player.y));
+      player.draw();
+      requestAnimationFrame(loop);
+    }
+    init();
+  </script>
+</body>
+</html>
