@@ -17,12 +17,12 @@ export const PLAYER_PROJECTILE_SPEED = 500;
 export const ENEMY_DRAW_SCALE = 1.6;
 export const ENEMY_MAX_HP = 2;
 export const ENEMY_HITBOX = 36;
-export const ENEMY_FIRE_INTERVAL = 1.0;
-export const ENEMY_AGGRO_RANGE = 600;
+export const ENEMY_FIRE_INTERVAL = 0.6;
+export const ENEMY_AGGRO_RANGE = 800;
 export const ENEMY_LOS_STEP = 8;
-export const ENEMY_PROJECTILE_SPEED = 380;
-export const ENEMY_BURST_COUNT = 2;
-export const ENEMY_BURST_SPREAD = 0.22;
+export const ENEMY_PROJECTILE_SPEED = 400;
+export const ENEMY_BURST_COUNT = 3;
+export const ENEMY_BURST_SPREAD = 0.28;
 
 export const MERCHANT_DRAW_SCALE = 1.6;
 export const MERCHANT_INTERACT_RANGE = 120;
@@ -30,6 +30,16 @@ export const MERCHANT_BUBBLE_RANGE = 300;
 export const BUBBLE_DRAW_SCALE = 1.6;
 
 export const COIN_PER_KILL = 10;
+
+export const STAMINA_MAX = 100;
+export const STAMINA_DRAIN = 50;
+export const STAMINA_REGEN = 25;
+export const STAMINA_MIN_TO_START = 10;
+
+export const SHIELD_RADIUS = 90;
+export const SHIELD_DRAW_SCALE = 0.85;
+export const BLOB_KNOCKBACK_DISTANCE = 70;
+export const SHIELD_BLOB_PUSH_BUFFER = 8;
 
 export const BLOB_HP = 3;
 export const BLOB_SPEED = 80;

@@ -1,6 +1,8 @@
 import {
   ZOOM, COIN_PER_KILL, MERCHANT_INTERACT_RANGE, MERCHANT_BUBBLE_RANGE,
-  MERCHANT_DRAW_SCALE, BUBBLE_DRAW_SCALE, BLOB_COIN_REWARD
+  MERCHANT_DRAW_SCALE, BUBBLE_DRAW_SCALE, BLOB_COIN_REWARD,
+  PLAYER_HITBOX, SHIELD_RADIUS, BLOB_KNOCKBACK_DISTANCE,
+  SHIELD_BLOB_PUSH_BUFFER
 } from "./config.js";
 import { assets, loadAllAssets } from "./assets.js";
 import { keys, mouse } from "./input.js";
@@ -12,7 +14,7 @@ import { Smoke } from "./entities/smoke.js";
 import { Projectile } from "./entities/projectile.js";
 import {
   initHUD, updateHP, updateCoins, updateDeaths, updateEnemies,
-  showMessage, hideMessage, showWinScreen
+  updateStamina, showMessage, hideMessage, showWinScreen
 } from "./hud.js";
 import * as Shop from "./shop.js";
 import { sfx } from "./audio.js";
@@ -95,6 +97,30 @@ function update(dt) {
 
   player.update(dt, playerHooks);
   updateHP(player.hp, player.maxHp);
+  updateStamina(player.stamina, player.maxStamina);
+
+  if (player.shieldActive) {
+    for (const b of blobs) {
+      if (!b.alive) continue;
+      const d = dist(player.x, player.y, b.x, b.y);
+      const minDist = SHIELD_RADIUS + b.hitbox;
+      if (d < minDist) {
+        const angle = d > 0.001
+          ? Math.atan2(b.y - player.y, b.x - player.x)
+          : Math.random() * Math.PI * 2;
+        const push = minDist - d + SHIELD_BLOB_PUSH_BUFFER;
+        b.x += Math.cos(angle) * push;
+        b.y += Math.sin(angle) * push;
+        b.pickNewTarget();
+        b.targetTimer = 0;
+      }
+    }
+    for (const s of smokes) {
+      if (s.alive && dist(player.x, player.y, s.x, s.y) < SHIELD_RADIUS + s.hitbox) {
+        s.alive = false;
+      }
+    }
+  }
 
   if (mouse.down && player.canFire()) {
     const { dx, dy } = aimDirection();
@@ -112,10 +138,22 @@ function update(dt) {
   const damageables = enemies.concat(blobs).concat(smokes);
   projectiles.forEach(p => p.update(dt, player, damageables));
 
-  if (!player.isHit && player.animState === "idle") {
+  if (!player.isHit && player.animState === "idle" && !player.shieldActive) {
     for (const s of smokes) {
       if (s.alive && dist(player.x, player.y, s.x, s.y) < s.hitbox) {
         s.alive = false;
+        player.takeDamage();
+        break;
+      }
+    }
+  }
+
+  if (!player.isHit && player.animState === "idle" && !player.shieldActive) {
+    for (const b of blobs) {
+      if (!b.alive) continue;
+      if (dist(player.x, player.y, b.x, b.y) < PLAYER_HITBOX + b.hitbox) {
+        const angle = Math.atan2(player.y - b.y, player.x - b.x);
+        player.knockback(angle, BLOB_KNOCKBACK_DISTANCE);
         player.takeDamage();
         break;
       }

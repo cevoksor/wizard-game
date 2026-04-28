@@ -24,6 +24,17 @@
     .hud-sep   { width: 1px; height: 20px; background: rgba(255,255,255,0.25); }
     #hud-hp { color: #ff5e6e; letter-spacing: 1px; }
     #hud-coins { color: #f5d76e; }
+    .hud-bar {
+      width: 90px; height: 12px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 6px; overflow: hidden;
+    }
+    #hud-stamina-fill {
+      height: 100%; width: 100%;
+      background: linear-gradient(to right, #5fdcff, #6e8eff);
+      transition: width 0.08s linear;
+    }
+    #hud-stamina-fill.empty { background: #555; }
 
     #hud-msg {
       position: fixed; top: 32%; left: 50%; transform: translate(-50%, -50%);

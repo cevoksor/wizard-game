@@ -1,6 +1,6 @@
 import {
   ENEMY_PROJECTILE_SPEED, PLAYER_PROJECTILE_SPEED,
-  ZOOM, PROJECTILE_W, PROJECTILE_H, PLAYER_HITBOX
+  ZOOM, PROJECTILE_W, PROJECTILE_H, PLAYER_HITBOX, SHIELD_RADIUS
 } from "../config.js";
 import { isWallPoint } from "../world.js";
 import { assets } from "../assets.js";
@@ -30,8 +30,12 @@ export class Projectile {
     }
 
     if (this.owner === "enemy") {
-      if (!player.isHit && player.animState === "idle"
-          && dist(this.x, this.y, player.x, player.y) < PLAYER_HITBOX) {
+      const dToPlayer = dist(this.x, this.y, player.x, player.y);
+      if (player.shieldActive && dToPlayer < SHIELD_RADIUS) {
+        this.alive = false;
+        return;
+      }
+      if (!player.isHit && player.animState === "idle" && dToPlayer < PLAYER_HITBOX) {
         player.takeDamage();
         this.alive = false;
       }

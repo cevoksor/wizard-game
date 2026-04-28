@@ -1,4 +1,4 @@
-let hpEl, coinsEl, deathsEl, enemiesEl, msgEl, winEl;
+let hpEl, coinsEl, deathsEl, enemiesEl, staminaEl, msgEl, winEl;
 let msgTimer = null;
 
 export function initHUD() {
@@ -7,6 +7,9 @@ export function initHUD() {
   hud.innerHTML = `
     <div class="hud-row">
       <span class="hud-label">HP</span><span id="hud-hp"></span>
+      <span class="hud-sep"></span>
+      <span class="hud-label">Výdrž:</span>
+      <div class="hud-bar"><div id="hud-stamina-fill"></div></div>
       <span class="hud-sep"></span>
       <span class="hud-label">Mince:</span><span id="hud-coins">0</span>
       <span class="hud-sep"></span>
@@ -23,7 +26,7 @@ export function initHUD() {
 
   const ctrl = document.createElement("div");
   ctrl.id = "hud-controls";
-  ctrl.textContent = "WASD pohyb · Shift sprint · LMB výstřel · E mluvit s kupcem · Esc zavřít menu";
+  ctrl.textContent = "WASD pohyb · Shift sprint (výdrž) · LMB výstřel · PMB štít · E kupec · Esc zavřít";
   document.body.appendChild(ctrl);
 
   winEl = document.createElement("div");
@@ -34,6 +37,7 @@ export function initHUD() {
   coinsEl = document.getElementById("hud-coins");
   deathsEl = document.getElementById("hud-deaths");
   enemiesEl = document.getElementById("hud-enemies");
+  staminaEl = document.getElementById("hud-stamina-fill");
 }
 
 export function updateHP(current, max) {
@@ -42,6 +46,11 @@ export function updateHP(current, max) {
 export function updateCoins(n)   { coinsEl.textContent = n; }
 export function updateDeaths(n)  { deathsEl.textContent = n; }
 export function updateEnemies(n) { enemiesEl.textContent = n; }
+export function updateStamina(current, max) {
+  const pct = Math.max(0, Math.min(100, (current / max) * 100));
+  staminaEl.style.width = pct + "%";
+  staminaEl.classList.toggle("empty", current <= 0.001);
+}
 
 export function showMessage(text, durationMs = 2000) {
   msgEl.textContent = text;
