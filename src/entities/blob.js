@@ -1,11 +1,11 @@
 import {
   ZOOM, BLOB_HP, BLOB_SPEED, BLOB_DRAW_SCALE, BLOB_HITBOX,
-  BLOB_TARGET_REPICK, BLOB_TARGET_RADIUS
+  BLOB_TARGET_REPICK, BLOB_TARGET_RADIUS, BLOB_SMOKE_INTERVAL
 } from "../config.js";
 import { isWall } from "../world.js";
 import { assets } from "../assets.js";
 import { sfx } from "../audio.js";
-import { dist } from "../utils.js";
+import { Smoke } from "./smoke.js";
 
 export class Blob {
   constructor(x, y) {
@@ -17,6 +17,7 @@ export class Blob {
     this.bobTime = Math.random() * Math.PI * 2;
     this.target = { x, y };
     this.targetTimer = 0;
+    this.smokeTimer = Math.random() * BLOB_SMOKE_INTERVAL;
     this.pickNewTarget();
   }
 
@@ -45,11 +46,17 @@ export class Blob {
     }
   }
 
-  update(dt) {
+  update(dt, smokes) {
     if (!this.alive) return;
     if (this.hitFlash > 0) this.hitFlash -= dt;
     this.bobTime += dt;
     this.targetTimer += dt;
+
+    this.smokeTimer += dt;
+    if (smokes && this.smokeTimer >= BLOB_SMOKE_INTERVAL) {
+      this.smokeTimer = 0;
+      smokes.push(new Smoke(this.x, this.y));
+    }
 
     const dx = this.target.x - this.x;
     const dy = this.target.y - this.y;
@@ -72,7 +79,7 @@ export class Blob {
   draw(canvas, ctx, camX, camY) {
     if (!this.alive) return;
     const sx = canvas.width / 2 + (this.x - camX) * ZOOM;
-    const sy = canvas.height / 2 + (this.y - camY) * ZOOM + Math.sin(this.bobTime * 3) * 8;
+    const sy = canvas.height / 2 + (this.y - camY) * ZOOM + Math.sin(this.bobTime * 3) * 10;
 
     ctx.save();
     ctx.translate(sx, sy);

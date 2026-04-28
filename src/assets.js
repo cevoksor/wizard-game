@@ -11,7 +11,10 @@ const IMG_NAMES = {
   bublina: "bublina.png",
   telo: "telo.png",
   nohy: "nohy.png",
-  blob: "blob.png"
+  blob: "blob.png",
+  dym1: "dym1.png",
+  dym2: "dym2.png",
+  dym3: "dym3.png"
 };
 
 export const assets = {};

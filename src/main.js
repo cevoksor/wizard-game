@@ -9,6 +9,7 @@ import { world, setMapData, scanMap, isWall } from "./world.js";
 import { Player } from "./entities/player.js";
 import { Enemy } from "./entities/enemy.js";
 import { Blob } from "./entities/blob.js";
+import { Smoke } from "./entities/smoke.js";
 import { Projectile } from "./entities/projectile.js";
 import {
   initHUD, updateHP, updateCoins, updateDeaths, updateEnemies,
@@ -32,6 +33,7 @@ resizeCanvas();
 let player;
 let enemies = [];
 let blobs = [];
+let smokes = [];
 let projectiles = [];
 let coins = 0;
 let deaths = 0;
@@ -104,10 +106,22 @@ function update(dt) {
   }
 
   enemies.forEach(e => e.update(dt, player, projectiles));
-  blobs.forEach(b => b.update(dt));
+  blobs.forEach(b => b.update(dt, smokes));
+  smokes.forEach(s => s.update(dt));
+  smokes = smokes.filter(s => s.alive);
   projectiles = projectiles.filter(p => p.alive);
-  const damageables = enemies.concat(blobs);
+  const damageables = enemies.concat(blobs).concat(smokes);
   projectiles.forEach(p => p.update(dt, player, damageables));
+
+  if (!player.isHit && player.animState === "idle") {
+    for (const s of smokes) {
+      if (s.alive && dist(player.x, player.y, s.x, s.y) < s.hitbox) {
+        s.alive = false;
+        player.takeDamage();
+        break;
+      }
+    }
+  }
 
   for (let i = enemies.length - 1; i >= 0; i--) {
     if (!enemies[i].alive) {
@@ -169,6 +183,7 @@ function render() {
     }
   }
 
+  smokes.forEach(s => s.draw(canvas, ctx, camX, camY));
   enemies.forEach(e => e.draw(canvas, ctx, camX, camY));
   blobs.forEach(b => b.draw(canvas, ctx, camX, camY));
   projectiles.forEach(p => p.draw(canvas, ctx, camX, camY));
