@@ -29,6 +29,15 @@ export const BUBBLE_DRAW_SCALE = 3.0;
 
 export const COIN_PER_KILL = 10;
 
+export const BLOB_COUNT = 4;
+export const BLOB_HP = 3;
+export const BLOB_SPEED = 80;
+export const BLOB_DRAW_SCALE = 1.2;
+export const BLOB_HITBOX = 50;
+export const BLOB_TARGET_REPICK = 3.0;
+export const BLOB_TARGET_RADIUS = 600;
+export const BLOB_COIN_REWARD = 15;
+
 export const PROJECTILE_W = 150;
 export const PROJECTILE_H = 330;
 

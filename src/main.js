@@ -1,12 +1,14 @@
 import {
   ZOOM, COIN_PER_KILL, MERCHANT_INTERACT_RANGE, MERCHANT_BUBBLE_RANGE,
-  MERCHANT_DRAW_SCALE, BUBBLE_DRAW_SCALE
+  MERCHANT_DRAW_SCALE, BUBBLE_DRAW_SCALE,
+  BLOB_COUNT, BLOB_COIN_REWARD
 } from "./config.js";
 import { assets, loadAllAssets } from "./assets.js";
 import { keys, mouse } from "./input.js";
-import { world, setMapData, scanMap } from "./world.js";
+import { world, setMapData, scanMap, isWall } from "./world.js";
 import { Player } from "./entities/player.js";
 import { Enemy } from "./entities/enemy.js";
+import { Blob } from "./entities/blob.js";
 import { Projectile } from "./entities/projectile.js";
 import {
   initHUD, updateHP, updateCoins, updateDeaths, updateEnemies,
@@ -29,6 +31,7 @@ resizeCanvas();
 
 let player;
 let enemies = [];
+let blobs = [];
 let projectiles = [];
 let coins = 0;
 let deaths = 0;
@@ -101,14 +104,23 @@ function update(dt) {
   }
 
   enemies.forEach(e => e.update(dt, player, projectiles));
+  blobs.forEach(b => b.update(dt));
   projectiles = projectiles.filter(p => p.alive);
-  projectiles.forEach(p => p.update(dt, player, enemies));
+  const damageables = enemies.concat(blobs);
+  projectiles.forEach(p => p.update(dt, player, damageables));
 
   for (let i = enemies.length - 1; i >= 0; i--) {
     if (!enemies[i].alive) {
       coins += COIN_PER_KILL;
       sfx.coin();
       enemies.splice(i, 1);
+    }
+  }
+  for (let i = blobs.length - 1; i >= 0; i--) {
+    if (!blobs[i].alive) {
+      coins += BLOB_COIN_REWARD;
+      sfx.coin();
+      blobs.splice(i, 1);
     }
   }
   updateCoins(coins);
@@ -158,8 +170,21 @@ function render() {
   }
 
   enemies.forEach(e => e.draw(canvas, ctx, camX, camY));
+  blobs.forEach(b => b.draw(canvas, ctx, camX, camY));
   projectiles.forEach(p => p.draw(canvas, ctx, camX, camY));
   player.draw(canvas, ctx);
+}
+
+function spawnBlobs(count) {
+  const result = [];
+  let attempts = 0;
+  while (result.length < count && attempts < 500) {
+    attempts++;
+    const x = Math.random() * world.width;
+    const y = Math.random() * world.height;
+    if (!isWall(x, y)) result.push(new Blob(x, y));
+  }
+  return result;
 }
 
 let last = null;
@@ -188,6 +213,7 @@ async function init() {
 
     scanMap();
     enemies = world.enemySpawns.map(s => new Enemy(s.x, s.y));
+    blobs = spawnBlobs(BLOB_COUNT);
     player = new Player(world.respawnPoint.x, world.respawnPoint.y);
 
     initHUD();

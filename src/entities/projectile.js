@@ -1,6 +1,6 @@
 import {
   ENEMY_PROJECTILE_SPEED, PLAYER_PROJECTILE_SPEED,
-  ZOOM, PROJECTILE_W, PROJECTILE_H, PLAYER_HITBOX, ENEMY_HITBOX
+  ZOOM, PROJECTILE_W, PROJECTILE_H, PLAYER_HITBOX
 } from "../config.js";
 import { isWallPoint } from "../world.js";
 import { assets } from "../assets.js";
@@ -19,7 +19,7 @@ export class Projectile {
     this.life = 0;
   }
 
-  update(dt, player, enemies) {
+  update(dt, player, targets) {
     this.life += dt;
     this.x += this.vx * dt;
     this.y += this.vy * dt;
@@ -36,9 +36,9 @@ export class Projectile {
         this.alive = false;
       }
     } else {
-      for (const e of enemies) {
-        if (e.alive && dist(this.x, this.y, e.x, e.y) < ENEMY_HITBOX) {
-          e.takeDamage();
+      for (const t of targets) {
+        if (t.alive && dist(this.x, this.y, t.x, t.y) < t.hitbox) {
+          t.takeDamage();
           this.alive = false;
           break;
         }

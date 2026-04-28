@@ -10,7 +10,8 @@ const IMG_NAMES = {
   kupec: "kupec.png",
   bublina: "bublina.png",
   telo: "telo.png",
-  nohy: "nohy.png"
+  nohy: "nohy.png",
+  blob: "blob.png"
 };
 
 export const assets = {};

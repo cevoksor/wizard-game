@@ -1,6 +1,6 @@
 import {
   ENEMY_DRAW_SCALE, ENEMY_FIRE_INTERVAL, ENEMY_AGGRO_RANGE,
-  ENEMY_LOS_STEP, ENEMY_MAX_HP, ZOOM
+  ENEMY_LOS_STEP, ENEMY_MAX_HP, ENEMY_HITBOX, ZOOM
 } from "../config.js";
 import { hasLineOfSight } from "../world.js";
 import { assets } from "../assets.js";
@@ -15,6 +15,7 @@ export class Enemy {
     this.hp = ENEMY_MAX_HP;
     this.alive = true;
     this.hitFlash = 0;
+    this.hitbox = ENEMY_HITBOX;
   }
 
   takeDamage() {
