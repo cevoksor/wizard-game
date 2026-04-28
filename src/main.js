@@ -1,11 +1,10 @@
 import {
   ZOOM, COIN_PER_KILL, MERCHANT_INTERACT_RANGE, MERCHANT_BUBBLE_RANGE,
-  MERCHANT_DRAW_SCALE, BUBBLE_DRAW_SCALE,
-  BLOB_COUNT, BLOB_COIN_REWARD
+  MERCHANT_DRAW_SCALE, BUBBLE_DRAW_SCALE, BLOB_COIN_REWARD
 } from "./config.js";
 import { assets, loadAllAssets } from "./assets.js";
 import { keys, mouse } from "./input.js";
-import { world, setMapData, scanMap, isWall } from "./world.js";
+import { world, setMapData, scanMap } from "./world.js";
 import { Player } from "./entities/player.js";
 import { Enemy } from "./entities/enemy.js";
 import { Blob } from "./entities/blob.js";
@@ -190,17 +189,6 @@ function render() {
   player.draw(canvas, ctx);
 }
 
-function spawnBlobs(count) {
-  const result = [];
-  let attempts = 0;
-  while (result.length < count && attempts < 500) {
-    attempts++;
-    const x = Math.random() * world.width;
-    const y = Math.random() * world.height;
-    if (!isWall(x, y)) result.push(new Blob(x, y));
-  }
-  return result;
-}
 
 let last = null;
 function loop(t) {
@@ -228,7 +216,7 @@ async function init() {
 
     scanMap();
     enemies = world.enemySpawns.map(s => new Enemy(s.x, s.y));
-    blobs = spawnBlobs(BLOB_COUNT);
+    blobs = world.enemySpawns.map(s => new Blob(s.x, s.y));
     player = new Player(world.respawnPoint.x, world.respawnPoint.y);
 
     initHUD();

@@ -1,6 +1,7 @@
 import {
   ENEMY_DRAW_SCALE, ENEMY_FIRE_INTERVAL, ENEMY_AGGRO_RANGE,
-  ENEMY_LOS_STEP, ENEMY_MAX_HP, ENEMY_HITBOX, ZOOM
+  ENEMY_LOS_STEP, ENEMY_MAX_HP, ENEMY_HITBOX, ZOOM,
+  ENEMY_BURST_COUNT, ENEMY_BURST_SPREAD
 } from "../config.js";
 import { hasLineOfSight } from "../world.js";
 import { assets } from "../assets.js";
@@ -40,7 +41,16 @@ export class Enemy {
     this.timer += dt;
     if (this.timer >= ENEMY_FIRE_INTERVAL) {
       this.timer = 0;
-      projectiles.push(new Projectile(this.x, this.y, player.x, player.y, "enemy"));
+      const baseAngle = Math.atan2(player.y - this.y, player.x - this.x);
+      for (let i = 0; i < ENEMY_BURST_COUNT; i++) {
+        const offset = ENEMY_BURST_COUNT === 1
+          ? 0
+          : (i / (ENEMY_BURST_COUNT - 1) - 0.5) * ENEMY_BURST_SPREAD;
+        const a = baseAngle + offset;
+        const tx = this.x + Math.cos(a) * 1000;
+        const ty = this.y + Math.sin(a) * 1000;
+        projectiles.push(new Projectile(this.x, this.y, tx, ty, "enemy"));
+      }
       sfx.enemyShot();
     }
   }

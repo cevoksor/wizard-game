@@ -1,9 +1,9 @@
-export const ZOOM = 2.5;
+export const ZOOM = 2.0;
 
 export const BASE_SPEED = 220;
 export const SPRINT_MULTIPLIER = 2;
 export const PLAYER_SIZE = 18;
-export const PLAYER_BASE_SCALE = 2.0;
+export const PLAYER_BASE_SCALE = 1.6;
 export const PLAYER_HITBOX = 24;
 
 export const RESPAWN_DELAY = 0.5;
@@ -14,39 +14,40 @@ export const MAX_HP = 3;
 export const PLAYER_FIRE_COOLDOWN = 0.4;
 export const PLAYER_PROJECTILE_SPEED = 500;
 
-export const ENEMY_DRAW_SCALE = 2.0;
+export const ENEMY_DRAW_SCALE = 1.6;
 export const ENEMY_MAX_HP = 2;
 export const ENEMY_HITBOX = 36;
-export const ENEMY_FIRE_INTERVAL = 3.0;
+export const ENEMY_FIRE_INTERVAL = 1.0;
 export const ENEMY_AGGRO_RANGE = 600;
 export const ENEMY_LOS_STEP = 8;
-export const ENEMY_PROJECTILE_SPEED = 350;
+export const ENEMY_PROJECTILE_SPEED = 380;
+export const ENEMY_BURST_COUNT = 2;
+export const ENEMY_BURST_SPREAD = 0.22;
 
-export const MERCHANT_DRAW_SCALE = 2.0;
+export const MERCHANT_DRAW_SCALE = 1.6;
 export const MERCHANT_INTERACT_RANGE = 120;
 export const MERCHANT_BUBBLE_RANGE = 300;
-export const BUBBLE_DRAW_SCALE = 2.0;
+export const BUBBLE_DRAW_SCALE = 1.6;
 
 export const COIN_PER_KILL = 10;
 
-export const BLOB_COUNT = 4;
 export const BLOB_HP = 3;
 export const BLOB_SPEED = 80;
-export const BLOB_DRAW_SCALE = 1.6;
+export const BLOB_DRAW_SCALE = 1.3;
 export const BLOB_HITBOX = 65;
 export const BLOB_TARGET_REPICK = 3.0;
 export const BLOB_TARGET_RADIUS = 600;
 export const BLOB_COIN_REWARD = 15;
 export const BLOB_SMOKE_INTERVAL = 1.5;
 
-export const SMOKE_DRAW_SCALE = 1.5;
+export const SMOKE_DRAW_SCALE = 1.2;
 export const SMOKE_HITBOX = 55;
 export const SMOKE_FRAME_DURATION = 0.5;
 export const SMOKE_LIFETIME = 8.0;
 export const SMOKE_FADE_OUT = 1.0;
 
-export const PROJECTILE_W = 105;
-export const PROJECTILE_H = 230;
+export const PROJECTILE_W = 84;
+export const PROJECTILE_H = 184;
 
 export const COLOR = {
   RESPAWN:  rgb => rgb[0] > 180 && rgb[1] > 180 && rgb[2] < 100,
