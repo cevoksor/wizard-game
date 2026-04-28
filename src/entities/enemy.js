@@ -1,6 +1,6 @@
 import {
-  ENEMY_DRAW_SCALE, ENEMY_FIRE_INTERVAL, ENEMY_AGGRO_RANGE,
-  ENEMY_LOS_STEP, ENEMY_MAX_HP, ENEMY_HITBOX, ZOOM,
+  ENEMY_DRAW_SCALE, ENEMY_FIRE_INTERVAL_MIN, ENEMY_FIRE_INTERVAL_MAX,
+  ENEMY_AGGRO_RANGE, ENEMY_LOS_STEP, ENEMY_MAX_HP, ENEMY_HITBOX, ZOOM,
   ENEMY_BURST_COUNT, ENEMY_BURST_SPREAD
 } from "../config.js";
 import { hasLineOfSight } from "../world.js";
@@ -9,10 +9,15 @@ import { dist } from "../utils.js";
 import { sfx } from "../audio.js";
 import { Projectile } from "./projectile.js";
 
+function randomInterval() {
+  return ENEMY_FIRE_INTERVAL_MIN + Math.random() * (ENEMY_FIRE_INTERVAL_MAX - ENEMY_FIRE_INTERVAL_MIN);
+}
+
 export class Enemy {
   constructor(x, y) {
     this.x = x; this.y = y;
-    this.timer = Math.random() * ENEMY_FIRE_INTERVAL;
+    this.nextInterval = randomInterval();
+    this.timer = Math.random() * this.nextInterval;
     this.hp = ENEMY_MAX_HP;
     this.alive = true;
     this.hitFlash = 0;
@@ -39,8 +44,9 @@ export class Enemy {
     if (!hasLineOfSight(this.x, this.y, player.x, player.y, ENEMY_LOS_STEP)) return;
 
     this.timer += dt;
-    if (this.timer >= ENEMY_FIRE_INTERVAL) {
+    if (this.timer >= this.nextInterval) {
       this.timer = 0;
+      this.nextInterval = randomInterval();
       const baseAngle = Math.atan2(player.y - this.y, player.x - this.x);
       for (let i = 0; i < ENEMY_BURST_COUNT; i++) {
         const offset = ENEMY_BURST_COUNT === 1

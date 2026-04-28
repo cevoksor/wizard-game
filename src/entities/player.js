@@ -106,8 +106,6 @@ export class Player {
       return;
     }
 
-    this.shieldActive = !!mouse.rightDown;
-
     let dx = 0, dy = 0;
     if (keys["w"] || keys["arrowup"])    dy--;
     if (keys["s"] || keys["arrowdown"])  dy++;
@@ -115,17 +113,25 @@ export class Player {
     if (keys["d"] || keys["arrowright"]) dx++;
     const moving = !!(dx || dy);
 
-    const wantSprint = !!keys["shift"] && !this.shieldActive;
-    if (wantSprint && moving && (this.isSprinting ? this.stamina > 0 : this.stamina > STAMINA_MIN_TO_START)) {
-      this.isSprinting = true;
+    const wantShield = !!mouse.rightDown;
+    const wantSprint = !!keys["shift"];
+
+    if (wantShield && (this.shieldActive ? this.stamina > 0 : this.stamina > STAMINA_MIN_TO_START)) {
+      this.shieldActive = true;
     } else {
-      this.isSprinting = false;
+      this.shieldActive = false;
     }
 
-    if (this.isSprinting) {
+    if (this.shieldActive) {
+      this.isSprinting = false;
+      this.stamina = Math.max(0, this.stamina - STAMINA_DRAIN * dt);
+      if (this.stamina <= 0) this.shieldActive = false;
+    } else if (wantSprint && moving && (this.isSprinting ? this.stamina > 0 : this.stamina > STAMINA_MIN_TO_START)) {
+      this.isSprinting = true;
       this.stamina = Math.max(0, this.stamina - STAMINA_DRAIN * dt);
       if (this.stamina <= 0) this.isSprinting = false;
     } else {
+      this.isSprinting = false;
       this.stamina = Math.min(this.maxStamina, this.stamina + STAMINA_REGEN * dt);
     }
 
@@ -186,8 +192,8 @@ export class Player {
       const bw = radius * 2;
       const bh = radius * 2;
       ctx.save();
-      ctx.globalAlpha = 0.85;
-      ctx.drawImage(assets.bublina, sx - bw / 2, sy - bh / 2, bw, bh);
+      ctx.globalAlpha = 0.9;
+      ctx.drawImage(assets.shield, sx - bw / 2, sy - bh / 2, bw, bh);
       ctx.restore();
     }
   }

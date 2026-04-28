@@ -14,7 +14,8 @@ const IMG_NAMES = {
   blob: "blob.png",
   dym1: "dym1.png",
   dym2: "dym2.png",
-  dym3: "dym3.png"
+  dym3: "dym3.png",
+  shield: "shield.png"
 };
 
 export const assets = {};
