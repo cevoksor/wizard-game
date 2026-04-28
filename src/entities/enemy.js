@@ -1,0 +1,70 @@
+import {
+  ENEMY_DRAW_SCALE, ENEMY_FIRE_INTERVAL, ENEMY_AGGRO_RANGE,
+  ENEMY_LOS_STEP, ENEMY_MAX_HP, ZOOM
+} from "../config.js";
+import { hasLineOfSight } from "../world.js";
+import { assets } from "../assets.js";
+import { dist } from "../utils.js";
+import { sfx } from "../audio.js";
+import { Projectile } from "./projectile.js";
+
+export class Enemy {
+  constructor(x, y) {
+    this.x = x; this.y = y;
+    this.timer = Math.random() * ENEMY_FIRE_INTERVAL;
+    this.hp = ENEMY_MAX_HP;
+    this.alive = true;
+    this.hitFlash = 0;
+  }
+
+  takeDamage() {
+    this.hp--;
+    this.hitFlash = 0.15;
+    if (this.hp <= 0) {
+      this.alive = false;
+      sfx.enemyDie();
+    } else {
+      sfx.hit();
+    }
+  }
+
+  update(dt, player, projectiles) {
+    if (!this.alive) return;
+    if (this.hitFlash > 0) this.hitFlash -= dt;
+    if (player.isHit || player.animState !== "idle") return;
+
+    if (dist(this.x, this.y, player.x, player.y) > ENEMY_AGGRO_RANGE) return;
+    if (!hasLineOfSight(this.x, this.y, player.x, player.y, ENEMY_LOS_STEP)) return;
+
+    this.timer += dt;
+    if (this.timer >= ENEMY_FIRE_INTERVAL) {
+      this.timer = 0;
+      projectiles.push(new Projectile(this.x, this.y, player.x, player.y, "enemy"));
+      sfx.enemyShot();
+    }
+  }
+
+  draw(canvas, ctx, camX, camY) {
+    if (!this.alive) return;
+    const sx = canvas.width / 2 + (this.x - camX) * ZOOM;
+    const sy = canvas.height / 2 + (this.y - camY) * ZOOM;
+    const scale = ENEMY_DRAW_SCALE;
+
+    ctx.save();
+    ctx.translate(sx, sy);
+    if (this.hitFlash > 0) ctx.filter = "brightness(2.5) saturate(0)";
+
+    const hW = assets.hul.width * scale;
+    const hH = assets.hul.height * scale;
+    ctx.save();
+    ctx.translate(-55 * scale, 5 * scale);
+    ctx.rotate(Math.sin(Date.now() * 0.005) * 0.2);
+    ctx.drawImage(assets.hul, -hW / 2, -hH / 1.2, hW, hH);
+    ctx.restore();
+
+    const eW = assets.carodej.width * scale;
+    const eH = assets.carodej.height * scale;
+    ctx.drawImage(assets.carodej, -eW / 2, -eH / 1.2, eW, eH);
+    ctx.restore();
+  }
+}
