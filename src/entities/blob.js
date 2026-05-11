@@ -1,11 +1,11 @@
 import {
   ZOOM, BLOB_HP, BLOB_SPEED, BLOB_DRAW_SCALE, BLOB_HITBOX,
   BLOB_TARGET_REPICK, BLOB_TARGET_RADIUS, BLOB_SMOKE_INTERVAL
-} from "../config.js";
-import { isWall } from "../world.js";
-import { assets } from "../assets.js";
-import { sfx } from "../audio.js";
-import { Smoke } from "./smoke.js";
+} from "../config.js?v=3";
+import { isWall } from "../world.js?v=3";
+import { assets } from "../assets.js?v=3";
+import { sfx } from "../audio.js?v=3";
+import { Smoke } from "./smoke.js?v=3";
 
 export class Blob {
   constructor(x, y) {

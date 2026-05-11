@@ -1,7 +1,6 @@
 const ITEMS = [
-  { id: "heal",     name: "Lektvar života",    cost: 15, desc: "Doplní HP na max" },
   { id: "fastfire", name: "Rychlejší výstřel", cost: 30, desc: "Sníží cooldown na polovinu" },
-  { id: "shield",   name: "Magický štít",      cost: 50, desc: "Pohltí jeden zásah" }
+  { id: "hat",      name: "Klobouk",           cost: 40, desc: "Pohltí jeden zásah" }
 ];
 
 let overlay, buyCb, closeCb;

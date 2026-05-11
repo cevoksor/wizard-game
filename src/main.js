@@ -2,23 +2,26 @@ import {
   ZOOM, COIN_PER_KILL, MERCHANT_INTERACT_RANGE, MERCHANT_BUBBLE_RANGE,
   MERCHANT_DRAW_SCALE, BUBBLE_DRAW_SCALE, BLOB_COIN_REWARD,
   PLAYER_HITBOX, SHIELD_RADIUS, BLOB_KNOCKBACK_DISTANCE,
-  SHIELD_BLOB_PUSH_BUFFER
-} from "./config.js";
-import { assets, loadAllAssets } from "./assets.js";
-import { keys, mouse } from "./input.js";
-import { world, setMapData, scanMap } from "./world.js";
-import { Player } from "./entities/player.js";
-import { Enemy } from "./entities/enemy.js";
-import { Blob } from "./entities/blob.js";
-import { Smoke } from "./entities/smoke.js";
-import { Projectile } from "./entities/projectile.js";
+  SHIELD_BLOB_PUSH_BUFFER, BOSS_COIN_REWARD,
+  BOSS_ROOM_TRIGGER_RANGE, CINEMATIC_PAN_TIME, CINEMATIC_HOLD_TIME, CINEMATIC_RETURN_TIME,
+  BOSS_DRAW_SCALE
+} from "./config.js?v=3";
+import { assets, loadAllAssets } from "./assets.js?v=3";
+import { keys, mouse } from "./input.js?v=3";
+import { world, setMapData, scanPlacementMap } from "./world.js?v=3";
+import { Player } from "./entities/player.js?v=3";
+import { Enemy } from "./entities/enemy.js?v=3";
+import { Blob } from "./entities/blob.js?v=3";
+import { Smoke } from "./entities/smoke.js?v=3";
+import { Projectile } from "./entities/projectile.js?v=3";
+import { Boss } from "./entities/boss.js?v=3";
 import {
   initHUD, updateHP, updateCoins, updateDeaths, updateEnemies,
   updateStamina, showMessage, hideMessage, showWinScreen
-} from "./hud.js";
-import * as Shop from "./shop.js";
-import { sfx } from "./audio.js";
-import { dist } from "./utils.js";
+} from "./hud.js?v=3";
+import * as Shop from "./shop.js?v=3";
+import { sfx } from "./audio.js?v=3";
+import { dist } from "./utils.js?v=3";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -36,6 +39,7 @@ let enemies = [];
 let blobs = [];
 let smokes = [];
 let projectiles = [];
+let boss = null;
 let coins = 0;
 let deaths = 0;
 let gameWon = false;
@@ -43,6 +47,13 @@ let gameWon = false;
 let ePressedLast = false;
 let escPressedLast = false;
 let merchantPromptShown = false;
+
+const cinematic = { state: "idle", timer: 0, played: false };
+const camera = { x: 0, y: 0 };
+
+function easeInOut(t) {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
 
 function buyItem(item) {
   if (coins < item.cost) {
@@ -52,9 +63,8 @@ function buyItem(item) {
   }
   coins -= item.cost;
   updateCoins(coins);
-  if (item.id === "heal")     player.heal();
   if (item.id === "fastfire") player.speedUpFire();
-  if (item.id === "shield")   player.addShield();
+  if (item.id === "hat")      player.addHat();
   showMessage("Koupeno: " + item.name);
   sfx.buy();
 }
@@ -74,8 +84,40 @@ const playerHooks = {
   }
 };
 
+function updateCinematic(dt) {
+  if (cinematic.state === "idle") return false;
+  cinematic.timer += dt;
+  if (cinematic.state === "pan-in" && cinematic.timer >= CINEMATIC_PAN_TIME) {
+    cinematic.state = "hold";
+    cinematic.timer = 0;
+  } else if (cinematic.state === "hold" && cinematic.timer >= CINEMATIC_HOLD_TIME) {
+    cinematic.state = "pan-out";
+    cinematic.timer = 0;
+  } else if (cinematic.state === "pan-out" && cinematic.timer >= CINEMATIC_RETURN_TIME) {
+    cinematic.state = "idle";
+    cinematic.timer = 0;
+  }
+  return true;
+}
+
+function maybeStartBossCinematic() {
+  if (cinematic.played || !boss || !boss.alive) return;
+  if (dist(player.x, player.y, boss.x, boss.y) < BOSS_ROOM_TRIGGER_RANGE) {
+    cinematic.played = true;
+    cinematic.state = "pan-in";
+    cinematic.timer = 0;
+  }
+}
+
 function update(dt) {
   if (gameWon) return;
+
+  if (cinematic.state !== "idle") {
+    updateCinematic(dt);
+    return;
+  }
+  maybeStartBossCinematic();
+  if (cinematic.state !== "idle") return;
 
   const ePressed = !!keys["e"];
   const escPressed = !!keys["escape"];
@@ -96,7 +138,7 @@ function update(dt) {
   if (Shop.isShopOpen()) return;
 
   player.update(dt, playerHooks);
-  updateHP(player.hp, player.maxHp);
+  updateHP(player.hp, player.maxHp, player.hasHat);
   updateStamina(player.stamina, player.maxStamina);
 
   if (player.shieldActive) {
@@ -131,11 +173,13 @@ function update(dt) {
   }
 
   enemies.forEach(e => e.update(dt, player, projectiles));
+  if (boss && boss.alive) boss.update(dt, player, projectiles, blobs);
   blobs.forEach(b => b.update(dt, smokes));
   smokes.forEach(s => s.update(dt));
   smokes = smokes.filter(s => s.alive);
   projectiles = projectiles.filter(p => p.alive);
   const damageables = enemies.concat(blobs).concat(smokes);
+  if (boss && boss.alive) damageables.push(boss);
   projectiles.forEach(p => p.update(dt, player, damageables));
 
   if (!player.isHit && player.animState === "idle" && !player.shieldActive) {
@@ -174,8 +218,15 @@ function update(dt) {
       blobs.splice(i, 1);
     }
   }
+  if (boss && !boss.alive && !gameWon) {
+    coins += BOSS_COIN_REWARD;
+    sfx.coin();
+    gameWon = true;
+    showWinScreen(deaths);
+    sfx.win();
+  }
   updateCoins(coins);
-  updateEnemies(enemies.length);
+  updateEnemies((boss && boss.alive ? 1 : 0) + enemies.length);
 
   if (world.merchant) {
     const inRange = dist(player.x, player.y, world.merchant.x, world.merchant.y) < MERCHANT_INTERACT_RANGE;
@@ -186,11 +237,25 @@ function update(dt) {
       merchantPromptShown = false;
     }
   }
+}
 
-  if (enemies.length === 0 && !gameWon) {
-    gameWon = true;
-    showWinScreen(deaths);
-    sfx.win();
+function computeCamera() {
+  if (!boss || cinematic.state === "idle") {
+    camera.x = player.x;
+    camera.y = player.y;
+    return;
+  }
+  if (cinematic.state === "pan-in") {
+    const t = easeInOut(Math.min(1, cinematic.timer / CINEMATIC_PAN_TIME));
+    camera.x = player.x + (boss.x - player.x) * t;
+    camera.y = player.y + (boss.y - player.y) * t;
+  } else if (cinematic.state === "hold") {
+    camera.x = boss.x;
+    camera.y = boss.y;
+  } else {
+    const t = easeInOut(Math.min(1, cinematic.timer / CINEMATIC_RETURN_TIME));
+    camera.x = boss.x + (player.x - boss.x) * t;
+    camera.y = boss.y + (player.y - boss.y) * t;
   }
 }
 
@@ -198,11 +263,12 @@ function render() {
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const camX = player.x;
-  const camY = player.y;
+  computeCamera();
+  const camX = camera.x;
+  const camY = camera.y;
   const mx = canvas.width / 2 - camX * ZOOM;
   const my = canvas.height / 2 - camY * ZOOM;
-  ctx.drawImage(assets.mapa_vizual, mx, my, world.width * ZOOM, world.height * ZOOM);
+  ctx.drawImage(assets.mapa, mx, my, world.width * ZOOM, world.height * ZOOM);
 
   if (world.merchant) {
     const msx = canvas.width / 2 + (world.merchant.x - camX) * ZOOM;
@@ -223,8 +289,40 @@ function render() {
   smokes.forEach(s => s.draw(canvas, ctx, camX, camY));
   enemies.forEach(e => e.draw(canvas, ctx, camX, camY));
   blobs.forEach(b => b.draw(canvas, ctx, camX, camY));
+  if (boss) boss.draw(canvas, ctx, camX, camY);
   projectiles.forEach(p => p.draw(canvas, ctx, camX, camY));
-  player.draw(canvas, ctx);
+
+  if (cinematic.state === "idle") {
+    player.draw(canvas, ctx);
+  } else {
+    drawPlayerAtWorld(player.x, player.y, camX, camY);
+  }
+
+  if (boss && (cinematic.state === "pan-in" || cinematic.state === "hold")) {
+    const bsx = canvas.width / 2 + (boss.x - camX) * ZOOM;
+    const bsy = canvas.height / 2 + (boss.y - camY) * ZOOM;
+    const bossH = assets.boss.height * BOSS_DRAW_SCALE;
+    let alpha = 1;
+    if (cinematic.state === "pan-in") {
+      alpha = Math.min(1, cinematic.timer / (CINEMATIC_PAN_TIME * 0.6));
+    }
+    const tScale = 1.6;
+    const tW = assets.boss_text.width * tScale;
+    const tH = assets.boss_text.height * tScale;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(assets.boss_text, bsx - tW / 2, bsy - bossH / 2 - tH - 10, tW, tH);
+    ctx.restore();
+  }
+}
+
+function drawPlayerAtWorld(wx, wy, camX, camY) {
+  const sx = canvas.width / 2 + (wx - camX) * ZOOM;
+  const sy = canvas.height / 2 + (wy - camY) * ZOOM;
+  const img = player.hasHat ? assets.klobouk1 : assets.krok_a;
+  const w = img.width * 1.35;
+  const h = img.height * 1.35;
+  ctx.drawImage(img, sx - w / 2, sy - h / 2, w, h);
 }
 
 
@@ -237,32 +335,33 @@ function loop(t) {
   requestAnimationFrame(loop);
 }
 
+function imageToData(img) {
+  const off = document.createElement("canvas");
+  off.width = img.width;
+  off.height = img.height;
+  const c = off.getContext("2d");
+  c.drawImage(img, 0, 0);
+  return c.getImageData(0, 0, img.width, img.height);
+}
+
 async function init() {
   try {
     await loadAllAssets();
 
-    const off = document.createElement("canvas");
-    off.width = assets.mapa.width;
-    off.height = assets.mapa.height;
-    const offCtx = off.getContext("2d");
-    offCtx.drawImage(assets.mapa, 0, 0);
-    setMapData(
-      offCtx.getImageData(0, 0, assets.mapa.width, assets.mapa.height),
-      assets.mapa.width,
-      assets.mapa.height
-    );
+    setMapData(imageToData(assets.mapa), assets.mapa.width, assets.mapa.height);
+    scanPlacementMap(imageToData(assets.mapa_places), assets.mapa_places.width, assets.mapa_places.height);
 
-    scanMap();
     enemies = world.enemySpawns.map(s => new Enemy(s.x, s.y));
-    blobs = world.enemySpawns.map(s => new Blob(s.x, s.y));
+    blobs = world.blobSpawns.map(s => new Blob(s.x, s.y));
+    boss = world.bossSpawn ? new Boss(world.bossSpawn.x, world.bossSpawn.y) : null;
     player = new Player(world.respawnPoint.x, world.respawnPoint.y);
 
     initHUD();
     Shop.initShop({ onBuy: buyItem, onClose: () => hideMessage() });
-    updateHP(player.hp, player.maxHp);
+    updateHP(player.hp, player.maxHp, player.hasHat);
     updateCoins(coins);
     updateDeaths(deaths);
-    updateEnemies(enemies.length);
+    updateEnemies(enemies.length + (boss ? 1 : 0));
 
     loadingEl.style.display = "none";
     requestAnimationFrame(loop);

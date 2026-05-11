@@ -40,8 +40,8 @@ export function initHUD() {
   staminaEl = document.getElementById("hud-stamina-fill");
 }
 
-export function updateHP(current, max) {
-  hpEl.textContent = "♥".repeat(Math.max(0, current)) + "♡".repeat(Math.max(0, max - current));
+export function updateHP(current, max, hasHat = false) {
+  hpEl.textContent = "♥".repeat(Math.max(0, current)) + "♡".repeat(Math.max(0, max - current)) + (hasHat ? " 🎩" : "");
 }
 export function updateCoins(n)   { coinsEl.textContent = n; }
 export function updateDeaths(n)  { deathsEl.textContent = n; }
@@ -66,6 +66,6 @@ export function hideMessage() {
 }
 
 export function showWinScreen(deaths) {
-  winEl.innerHTML = `VÍTĚZSTVÍ!<div class="sub">Porazil jsi všechny čaroděje. Smrtí: ${deaths}</div>`;
+  winEl.innerHTML = `VÍTĚZSTVÍ!<div class="sub">Porazil jsi bosse. Smrtí: ${deaths}</div>`;
   winEl.classList.add("visible");
 }

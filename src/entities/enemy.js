@@ -2,12 +2,12 @@ import {
   ENEMY_DRAW_SCALE, ENEMY_FIRE_INTERVAL_MIN, ENEMY_FIRE_INTERVAL_MAX,
   ENEMY_AGGRO_RANGE, ENEMY_LOS_STEP, ENEMY_MAX_HP, ENEMY_HITBOX, ZOOM,
   ENEMY_BURST_COUNT, ENEMY_BURST_SPREAD
-} from "../config.js";
-import { hasLineOfSight } from "../world.js";
-import { assets } from "../assets.js";
-import { dist } from "../utils.js";
-import { sfx } from "../audio.js";
-import { Projectile } from "./projectile.js";
+} from "../config.js?v=3";
+import { hasLineOfSight } from "../world.js?v=3";
+import { assets } from "../assets.js?v=3";
+import { dist } from "../utils.js?v=3";
+import { sfx } from "../audio.js?v=3";
+import { Projectile } from "./projectile.js?v=3";
 
 function randomInterval() {
   return ENEMY_FIRE_INTERVAL_MIN + Math.random() * (ENEMY_FIRE_INTERVAL_MAX - ENEMY_FIRE_INTERVAL_MIN);

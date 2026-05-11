@@ -1,13 +1,13 @@
-import { keys, mouse } from "../input.js";
+import { keys, mouse } from "../input.js?v=3";
 import {
   BASE_SPEED, SPRINT_MULTIPLIER, RESPAWN_DELAY, ANIM_SPEED,
   PLAYER_BASE_SCALE, MAX_HP, PLAYER_FIRE_COOLDOWN,
   STAMINA_MAX, STAMINA_DRAIN, STAMINA_REGEN, STAMINA_MIN_TO_START,
   SHIELD_RADIUS, SHIELD_DRAW_SCALE, ZOOM
-} from "../config.js";
-import { isWall, isGreen, world } from "../world.js";
-import { assets } from "../assets.js";
-import { sfx } from "../audio.js";
+} from "../config.js?v=3";
+import { isWall, isGreen, world } from "../world.js?v=3";
+import { assets } from "../assets.js?v=3";
+import { sfx } from "../audio.js?v=3";
 
 export class Player {
   constructor(x, y) {
@@ -24,12 +24,20 @@ export class Player {
     this.fireCooldown = 0;
     this.fireRate = PLAYER_FIRE_COOLDOWN;
     this.shieldCharges = 0;
+    this.hasHat = false;
     this.stamina = STAMINA_MAX;
     this.maxStamina = STAMINA_MAX;
     this.shieldActive = false;
   }
 
   takeDamage() {
+    if (this.hasHat) {
+      this.hasHat = false;
+      sfx.hit();
+      this.isHit = true;
+      this.hitTimer = 0;
+      return;
+    }
     if (this.shieldCharges > 0) {
       this.shieldCharges--;
       sfx.hit();
@@ -54,6 +62,7 @@ export class Player {
 
   heal()         { this.hp = this.maxHp; }
   addShield()    { this.shieldCharges = 1; }
+  addHat()       { this.hasHat = true; }
   speedUpFire()  { this.fireRate = Math.max(0.1, this.fireRate * 0.5); }
 
   canFire() {
@@ -167,6 +176,8 @@ export class Player {
     let img;
     if (this.isHit) {
       img = assets.zasah;
+    } else if (this.hasHat) {
+      img = (this.moving && Math.floor(this.walkTime * 5) % 2 === 0) ? assets.klobouk2 : assets.klobouk1;
     } else if (this.moving && Math.floor(this.walkTime * 5) % 2 === 0) {
       img = assets.krok_b;
     } else {

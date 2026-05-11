@@ -1,10 +1,10 @@
 import {
   ENEMY_PROJECTILE_SPEED, PLAYER_PROJECTILE_SPEED,
   ZOOM, PROJECTILE_W, PROJECTILE_H, PLAYER_HITBOX, SHIELD_RADIUS
-} from "../config.js";
-import { isWallPoint } from "../world.js";
-import { assets } from "../assets.js";
-import { dist } from "../utils.js";
+} from "../config.js?v=3";
+import { isWallPoint } from "../world.js?v=3";
+import { assets } from "../assets.js?v=3";
+import { dist } from "../utils.js?v=3";
 
 export class Projectile {
   constructor(x, y, tx, ty, owner = "enemy") {
