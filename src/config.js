@@ -25,6 +25,11 @@ export const ENEMY_PROJECTILE_SPEED = 400;
 export const ENEMY_BURST_COUNT = 1;
 export const ENEMY_BURST_SPREAD = 0;
 
+export const ENEMY_RADIAL_INTERVAL_MIN = 7.0;
+export const ENEMY_RADIAL_INTERVAL_MAX = 12.0;
+export const ENEMY_RADIAL_CHARGE_TIME = 0.6;
+export const ENEMY_RADIAL_COUNT = 6;
+
 export const MERCHANT_DRAW_SCALE = 1.6;
 export const MERCHANT_INTERACT_RANGE = 120;
 export const MERCHANT_BUBBLE_RANGE = 300;

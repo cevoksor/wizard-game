@@ -1,11 +1,12 @@
 import {
   ZOOM, BLOB_HP, BLOB_SPEED, BLOB_DRAW_SCALE, BLOB_HITBOX,
   BLOB_TARGET_REPICK, BLOB_TARGET_RADIUS, BLOB_SMOKE_INTERVAL
-} from "../config.js?v=3";
-import { isWall } from "../world.js?v=3";
-import { assets } from "../assets.js?v=3";
-import { sfx } from "../audio.js?v=3";
-import { Smoke } from "./smoke.js?v=3";
+} from "../config.js?v=6";
+import { isWall } from "../world.js?v=6";
+import { assets } from "../assets.js?v=6";
+import { sfx } from "../audio.js?v=6";
+import { Smoke } from "./smoke.js?v=6";
+import { drawShadow } from "../utils.js?v=6";
 
 export class Blob {
   constructor(x, y) {
@@ -79,13 +80,18 @@ export class Blob {
   draw(canvas, ctx, camX, camY) {
     if (!this.alive) return;
     const sx = canvas.width / 2 + (this.x - camX) * ZOOM;
-    const sy = canvas.height / 2 + (this.y - camY) * ZOOM + Math.sin(this.bobTime * 3) * 10;
+    const groundY = canvas.height / 2 + (this.y - camY) * ZOOM;
+    const bob = Math.sin(this.bobTime * 3) * 10;
+    const sy = groundY + bob;
+
+    const w = assets.blob.width * BLOB_DRAW_SCALE;
+    const h = assets.blob.height * BLOB_DRAW_SCALE;
+    const liftFactor = (bob + 10) / 20;
+    drawShadow(ctx, sx, groundY + h * 0.45, w * (0.36 - 0.07 * liftFactor), h * 0.09, 0.32 - 0.08 * liftFactor);
 
     ctx.save();
     ctx.translate(sx, sy);
     if (this.hitFlash > 0) ctx.filter = "brightness(2.5) saturate(0)";
-    const w = assets.blob.width * BLOB_DRAW_SCALE;
-    const h = assets.blob.height * BLOB_DRAW_SCALE;
     ctx.drawImage(assets.blob, -w / 2, -h / 2, w, h);
     ctx.restore();
   }

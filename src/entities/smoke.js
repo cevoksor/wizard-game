@@ -1,8 +1,8 @@
 import {
   ZOOM, SMOKE_HITBOX, SMOKE_DRAW_SCALE,
   SMOKE_FRAME_DURATION, SMOKE_LIFETIME, SMOKE_FADE_OUT
-} from "../config.js?v=3";
-import { assets } from "../assets.js?v=3";
+} from "../config.js?v=6";
+import { assets } from "../assets.js?v=6";
 
 export class Smoke {
   constructor(x, y) {

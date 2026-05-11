@@ -5,23 +5,23 @@ import {
   SHIELD_BLOB_PUSH_BUFFER, BOSS_COIN_REWARD,
   BOSS_ROOM_TRIGGER_RANGE, CINEMATIC_PAN_TIME, CINEMATIC_HOLD_TIME, CINEMATIC_RETURN_TIME,
   BOSS_DRAW_SCALE
-} from "./config.js?v=3";
-import { assets, loadAllAssets } from "./assets.js?v=3";
-import { keys, mouse } from "./input.js?v=3";
-import { world, setMapData, scanPlacementMap } from "./world.js?v=3";
-import { Player } from "./entities/player.js?v=3";
-import { Enemy } from "./entities/enemy.js?v=3";
-import { Blob } from "./entities/blob.js?v=3";
-import { Smoke } from "./entities/smoke.js?v=3";
-import { Projectile } from "./entities/projectile.js?v=3";
-import { Boss } from "./entities/boss.js?v=3";
+} from "./config.js?v=6";
+import { assets, loadAllAssets } from "./assets.js?v=6";
+import { keys, mouse } from "./input.js?v=6";
+import { world, setMapData, scanPlacementMap } from "./world.js?v=6";
+import { Player } from "./entities/player.js?v=6";
+import { Enemy } from "./entities/enemy.js?v=6";
+import { Blob } from "./entities/blob.js?v=6";
+import { Smoke } from "./entities/smoke.js?v=6";
+import { Projectile } from "./entities/projectile.js?v=6";
+import { Boss } from "./entities/boss.js?v=6";
 import {
   initHUD, updateHP, updateCoins, updateDeaths, updateEnemies,
   updateStamina, showMessage, hideMessage, showWinScreen
-} from "./hud.js?v=3";
-import * as Shop from "./shop.js?v=3";
-import { sfx } from "./audio.js?v=3";
-import { dist } from "./utils.js?v=3";
+} from "./hud.js?v=6";
+import * as Shop from "./shop.js?v=6";
+import { sfx } from "./audio.js?v=6";
+import { dist } from "./utils.js?v=6";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");

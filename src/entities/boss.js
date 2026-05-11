@@ -4,13 +4,13 @@ import {
   BOSS_AGGRO_RANGE, BOSS_SUMMON_INTERVAL, BOSS_SUMMON_CHARGE_TIME,
   BOSS_SUMMON_COUNT, BOSS_BURST_INTERVAL, BOSS_BURST_CHARGE_TIME,
   BOSS_BURST_COUNT, ENEMY_LOS_STEP
-} from "../config.js?v=3";
-import { hasLineOfSight } from "../world.js?v=3";
-import { assets } from "../assets.js?v=3";
-import { dist } from "../utils.js?v=3";
-import { sfx } from "../audio.js?v=3";
-import { Projectile } from "./projectile.js?v=3";
-import { Blob } from "./blob.js?v=3";
+} from "../config.js?v=6";
+import { hasLineOfSight } from "../world.js?v=6";
+import { assets } from "../assets.js?v=6";
+import { dist, drawShadow } from "../utils.js?v=6";
+import { sfx } from "../audio.js?v=6";
+import { Projectile } from "./projectile.js?v=6";
+import { Blob } from "./blob.js?v=6";
 
 function randomFireInterval() {
   return BOSS_FIRE_INTERVAL_MIN + Math.random() * (BOSS_FIRE_INTERVAL_MAX - BOSS_FIRE_INTERVAL_MIN);
@@ -118,7 +118,15 @@ export class Boss {
   draw(canvas, ctx, camX, camY) {
     if (!this.alive) return;
     const sx = canvas.width / 2 + (this.x - camX) * ZOOM;
-    const sy = canvas.height / 2 + (this.y - camY) * ZOOM + Math.sin(this.bobTime * 2) * 6;
+    const groundY = canvas.height / 2 + (this.y - camY) * ZOOM;
+    const BOB_AMP = 32;
+    const bob = Math.sin(this.bobTime * 3.2) * BOB_AMP - BOB_AMP * 0.6;
+    const sy = groundY + bob;
+
+    const w = assets.boss.width * BOSS_DRAW_SCALE;
+    const h = assets.boss.height * BOSS_DRAW_SCALE;
+    const liftFactor = (bob + BOB_AMP * 1.6) / (BOB_AMP * 2);
+    drawShadow(ctx, sx, groundY + h * 0.55, w * (0.42 - 0.14 * liftFactor), h * 0.1, 0.45 - 0.18 * liftFactor);
 
     ctx.save();
     ctx.translate(sx, sy);
@@ -131,8 +139,6 @@ export class Boss {
     } else if (this.hitFlash > 0) {
       ctx.filter = "brightness(2.5) saturate(0)";
     }
-    const w = assets.boss.width * BOSS_DRAW_SCALE;
-    const h = assets.boss.height * BOSS_DRAW_SCALE;
     ctx.drawImage(assets.boss, -w / 2, -h / 2, w, h);
     ctx.restore();
 

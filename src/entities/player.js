@@ -1,13 +1,13 @@
-import { keys, mouse } from "../input.js?v=3";
+import { keys, mouse } from "../input.js?v=6";
 import {
   BASE_SPEED, SPRINT_MULTIPLIER, RESPAWN_DELAY, ANIM_SPEED,
   PLAYER_BASE_SCALE, MAX_HP, PLAYER_FIRE_COOLDOWN,
   STAMINA_MAX, STAMINA_DRAIN, STAMINA_REGEN, STAMINA_MIN_TO_START,
   SHIELD_RADIUS, SHIELD_DRAW_SCALE, ZOOM
-} from "../config.js?v=3";
-import { isWall, isGreen, world } from "../world.js?v=3";
-import { assets } from "../assets.js?v=3";
-import { sfx } from "../audio.js?v=3";
+} from "../config.js?v=6";
+import { isWall, isGreen, world } from "../world.js?v=6";
+import { assets } from "../assets.js?v=6";
+import { sfx } from "../audio.js?v=6";
 
 export class Player {
   constructor(x, y) {

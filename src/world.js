@@ -1,5 +1,5 @@
-import { COLOR, PLAYER_SIZE } from "./config.js?v=3";
-import { dist } from "./utils.js?v=3";
+import { COLOR, PLAYER_SIZE } from "./config.js?v=6";
+import { dist } from "./utils.js?v=6";
 
 export const world = {
   width: 0,
